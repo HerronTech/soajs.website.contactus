@@ -3,7 +3,7 @@
 module.exports = {
 	
 	serviceName: "contactUs",
-	servicePort: 4400,
+	servicePort: 4995,
 	"errors": {
 		"100": "Failed to send email"
 	},

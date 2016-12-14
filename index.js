@@ -1,24 +1,25 @@
 'use strict';
 var soajs = require('soajs');
-var request = require('request');
 var config = require('./config.js');
 
-var service = new soajs.server.service({
-	"config": config
-});
+var service = new soajs.server.service(config);
+
+function checkIfError(req, res, data, cb) {
+	return data.check ? res.soajs.buildResponse({code: data.code, error: data.error}) : cb();
+}
 
 function sendMail(req, data, cb) {
 	var transportConfiguration = config.mail.transport || null;
 	var mailer = new (soajs.mail)(transportConfiguration);
-
+	
 	var mailOptions = {
 		'to': config.mail.to,
 		'from': data.email,
 		'subject': config.mail.subject,
 		'data': data,
-		'path': __dirname + '/template.tmpl'
+		'path': '/opt/soajs/node_modules/soajs.website.contactus/template.tmpl'
 	};
-
+	
 	mailer.send(mailOptions, cb);
 }
 service.init(function () {
@@ -32,14 +33,17 @@ service.init(function () {
 		};
 		
 		sendMail(req, data, function (error) {
-			if (error) {
-				req.soajs.log.error(error);
-				return res.jsonp(req.soajs.buildResponse({"code": 100, "msg": config.errors[100]}));
-			}
-			
-			return res.jsonp(req.soajs.buildResponse(null, true));
+			var data = {
+				"check": error,
+				"code": 100,
+				"error": config.errors[100]
+			};
+			checkIfError(req, res, data, function () {
+				return res.jsonp(req.soajs.buildResponse(null, true));
+			});
 		});
 	});
 	
 	service.start();
 });
+//req.soajs.log.error(error);
